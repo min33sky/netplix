@@ -60,6 +60,7 @@ export const GlobalStyle = createGlobalStyle`
     color: ${(props) => props.theme.white.darker};
     line-height: 1.2;
 
+    overflow-x: hidden;
   }
 
   a {
