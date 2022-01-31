@@ -58,6 +58,29 @@ const Box = styled(motion.div)<{ bgPhoto: string }>`
   background-size: cover;
   background-position: center center;
   height: 200px;
+
+  /* 첫 번째, 마지막 아이템의 애니메이션이 짤리지 않게 설정 */
+  &:first-child {
+    transform-origin: center left;
+  }
+
+  &:last-child {
+    transform-origin: center right;
+  }
+`;
+
+const Info = styled(motion.div)`
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 10px;
+  background-color: ${(props) => props.theme.black.lighter};
+  opacity: 0;
+
+  h4 {
+    text-align: center;
+    font-size: 18px;
+  }
 `;
 
 const rowVariants: Variants = {
@@ -76,10 +99,42 @@ const rowVariants: Variants = {
   }),
 };
 
+const boxVariants: Variants = {
+  normal: {
+    scale: 1,
+  },
+  hover: {
+    y: -80,
+    scale: 1.3,
+    transition: {
+      delay: 0.5,
+      duration: 0.1,
+      type: 'tween',
+    },
+  },
+};
+
+const infoVariants: Variants = {
+  hover: {
+    opacity: 1,
+    transition: {
+      delay: 0.5,
+      duration: 0.1,
+      type: 'tween',
+    },
+  },
+};
+
 /**
  * 슬라이더에 보여질 아이템의 개수
  */
 const SLIDER_OFFSET = 6;
+
+/**
+ * 포스터 이미지가 없을 경우 사용할 이미지 주소
+ */
+const NEtFLIX_LOGO_URL =
+  'https://assets.brand.microsites.netflix.io/assets/2800a67c-4252-11ec-a9ce-066b49664af6_cm_800w.jpg?v=4';
 
 /**
  * 메인 페이지
@@ -141,8 +196,20 @@ function Home() {
                   .map((movie) => (
                     <Box
                       key={movie.id}
-                      bgPhoto={makeImagePath(movie.backdrop_path || '', 'w500')}
-                    />
+                      variants={boxVariants}
+                      initial="normal"
+                      whileHover="hover"
+                      transition={{ type: 'tween' }}
+                      bgPhoto={
+                        movie.backdrop_path
+                          ? makeImagePath(movie.backdrop_path, 'w500')
+                          : NEtFLIX_LOGO_URL
+                      }
+                    >
+                      <Info variants={infoVariants}>
+                        <h4>{movie.title}</h4>
+                      </Info>
+                    </Box>
                   ))}
               </Row>
             </AnimatePresence>
