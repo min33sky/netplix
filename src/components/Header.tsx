@@ -1,6 +1,6 @@
 import { motion, useAnimation, useViewportScroll, Variants } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { Link, useMatch } from 'react-router-dom';
+import { Link, useMatch, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 const Nav = styled(motion.nav)`
@@ -109,7 +109,7 @@ const logoVariants: Variants = {
   },
   hover: {
     fillOpacity: [1, 0, 1],
-    translateY: [0, -10, 0],
+    translateY: [0, -5, 0],
     transition: {
       repeat: Infinity,
     },
@@ -131,6 +131,7 @@ const navVariants: Variants = {
  * @returns
  */
 function Header() {
+  const navigate = useNavigate();
   const homeMatch = useMatch('/');
   const tvMatch = useMatch('/tv');
 
@@ -164,10 +165,13 @@ function Header() {
     setSearchOpen((prev) => !prev);
   };
 
+  const onLogoClicked = () => navigate('/');
+
   return (
     <Nav variants={navVariants} initial="top" animate={navAnimation}>
       <Col>
         <Logo
+          onClick={onLogoClicked}
           variants={logoVariants}
           whileHover="hover"
           initial="normal"

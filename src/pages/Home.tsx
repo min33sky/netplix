@@ -2,8 +2,9 @@ import { useQuery } from 'react-query';
 import styled from 'styled-components';
 import { getMovies } from '../api/movie';
 import { makeImagePath } from '../utils/movie';
-import { AnimatePresence, motion, Variants } from 'framer-motion';
+import { AnimatePresence, motion, useViewportScroll, Variants } from 'framer-motion';
 import { useState } from 'react';
+import { useMatch, useNavigate } from 'react-router-dom';
 
 const Wrapper = styled.div`
   background-color: black;
@@ -52,12 +53,13 @@ const Row = styled(motion.div)`
   position: absolute;
 `;
 
-const Box = styled(motion.div)<{ bgPhoto: string }>`
-  background-color: white;
-  background-image: url(${(props) => props.bgPhoto});
+const Box = styled(motion.div)<{ bgphoto: string }>`
+  background-color: #741414;
+  background-image: url(${(props) => props.bgphoto});
   background-size: cover;
   background-position: center center;
   height: 200px;
+  cursor: pointer;
 
   /* 첫 번째, 마지막 아이템의 애니메이션이 짤리지 않게 설정 */
   &:first-child {
@@ -81,6 +83,50 @@ const Info = styled(motion.div)`
     text-align: center;
     font-size: 18px;
   }
+`;
+
+const Overlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+`;
+
+const BigMovie = styled(motion.div)`
+  position: absolute;
+  background-color: rgba(0, 0, 0, 1);
+  width: 40vw;
+  height: 80vh;
+
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+`;
+
+const BigCover = styled.div<{ bgImage?: string }>`
+  background-image: linear-gradient(to top, black, transparent), url(${(props) => props.bgImage});
+  background-size: cover;
+  background-position: center center;
+  /* background-color: blueviolet; */
+  width: 100%;
+  height: 400px;
+`;
+
+const BigTitle = styled.h3`
+  color: ${(props) => props.theme.white.lighter};
+  font-weight: 600;
+  font-size: 46px;
+  padding: 20px;
+  top: -80px;
+  position: relative;
+`;
+
+const BigOverview = styled.p`
+  padding: 20px;
+  color: ${(props) => props.theme.white.lighter};
+  position: relative;
+  top: -80px;
 `;
 
 const rowVariants: Variants = {
@@ -133,7 +179,7 @@ const SLIDER_OFFSET = 6;
 /**
  * 포스터 이미지가 없을 경우 사용할 이미지 주소
  */
-const NEtFLIX_LOGO_URL =
+const NETFLIX_LOGO_URL =
   'https://assets.brand.microsites.netflix.io/assets/2800a67c-4252-11ec-a9ce-066b49664af6_cm_800w.jpg?v=4';
 
 /**
@@ -142,6 +188,11 @@ const NEtFLIX_LOGO_URL =
  */
 function Home() {
   const { data, isLoading } = useQuery(['movies', 'nowPlaying'], getMovies);
+
+  const navigate = useNavigate();
+  const bigMovieMatch = useMatch('/movies/:movieId');
+
+  const { scrollY } = useViewportScroll();
 
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
@@ -160,6 +211,12 @@ function Home() {
 
   //? 컴포넌트의 애니메이션이 종료되었을 때 호출되는 핸들러
   const toggleLeaving = () => setLeaving((prev) => !prev);
+
+  const onBoxClicked = (movieId: string) => navigate(`/movies/${movieId}`);
+  const onOverlayClicked = () => navigate('/');
+  const clickedMovie =
+    bigMovieMatch?.params.movieId &&
+    data?.results.find((movie) => movie.id === +bigMovieMatch.params.movieId!);
 
   return (
     <Wrapper>
@@ -196,14 +253,16 @@ function Home() {
                   .map((movie) => (
                     <Box
                       key={movie.id}
+                      layoutId={String(movie.id)}
+                      onClick={() => onBoxClicked(String(movie.id))}
                       variants={boxVariants}
                       initial="normal"
                       whileHover="hover"
                       transition={{ type: 'tween' }}
-                      bgPhoto={
+                      bgphoto={
                         movie.backdrop_path
                           ? makeImagePath(movie.backdrop_path, 'w500')
-                          : NEtFLIX_LOGO_URL
+                          : NETFLIX_LOGO_URL
                       }
                     >
                       <Info variants={infoVariants}>
@@ -214,6 +273,40 @@ function Home() {
               </Row>
             </AnimatePresence>
           </Slider>
+
+          {/* 영화 상세 정보 모달 */}
+          <AnimatePresence>
+            {bigMovieMatch && (
+              <>
+                <Overlay
+                  onClick={onOverlayClicked}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                />
+                <BigMovie
+                  layoutId={bigMovieMatch.params.movieId}
+                  style={{
+                    top: scrollY.get() + 100,
+                  }}
+                >
+                  {clickedMovie && (
+                    <>
+                      <BigCover
+                        bgImage={
+                          clickedMovie.backdrop_path
+                            ? makeImagePath(clickedMovie.backdrop_path, 'w500')
+                            : NETFLIX_LOGO_URL
+                        }
+                      />
+                      <BigTitle>{clickedMovie.title}</BigTitle>
+                      <BigOverview>{clickedMovie.overview}</BigOverview>
+                    </>
+                  )}
+                </BigMovie>
+              </>
+            )}
+          </AnimatePresence>
         </Wrapper>
       )}
     </Wrapper>
