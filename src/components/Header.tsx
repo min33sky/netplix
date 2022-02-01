@@ -1,5 +1,6 @@
 import { motion, useAnimation, useViewportScroll, Variants } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link, useMatch, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -71,7 +72,7 @@ const CurrentLocationBar = styled(motion.span)`
   background-color: ${(props) => props.theme.red};
 `;
 
-const Search = styled.span`
+const Search = styled.form`
   position: relative;
   display: flex;
   align-items: center;
@@ -126,6 +127,10 @@ const navVariants: Variants = {
   },
 };
 
+interface IForm {
+  keyword: string;
+}
+
 /**
  * 헤더 컴포넌트
  * @returns
@@ -135,9 +140,14 @@ function Header() {
   const homeMatch = useMatch('/');
   const tvMatch = useMatch('/tv');
 
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const { register, handleSubmit, setValue } = useForm<IForm>();
+  const { ref, ...rest } = register('keyword'); // https://react-hook-form.com/kr/faqs/
   const [searchOpen, setSearchOpen] = useState(false);
   const { scrollY } = useViewportScroll();
 
+  //? 코드로 이벤트를 Trigger할 필요가 있을 땐 useAnimation 훅을 사용한다.
   const inputAnimation = useAnimation();
   const navAnimation = useAnimation();
 
@@ -152,7 +162,6 @@ function Header() {
   }, [navAnimation, scrollY]);
 
   const toggleSearch = () => {
-    //* Animation을 props 대신 코드로 trigger하는 방법
     if (searchOpen) {
       inputAnimation.start({
         scaleX: 0,
@@ -162,10 +171,16 @@ function Header() {
         scaleX: 1,
       });
     }
+    inputRef.current?.focus();
     setSearchOpen((prev) => !prev);
   };
 
   const onLogoClicked = () => navigate('/');
+
+  const onValid = ({ keyword }: IForm) => {
+    navigate(`/search?keyword=${keyword}`);
+    setValue('keyword', '');
+  };
 
   return (
     <Nav variants={navVariants} initial="top" animate={navAnimation}>
@@ -194,7 +209,7 @@ function Header() {
       </Col>
 
       <Col>
-        <Search>
+        <Search onSubmit={handleSubmit(onValid)}>
           <motion.svg
             onClick={toggleSearch}
             animate={{ x: searchOpen ? -210 : 0 }}
@@ -212,6 +227,11 @@ function Header() {
           </motion.svg>
 
           <Input
+            {...rest}
+            ref={(e) => {
+              ref(e);
+              inputRef.current = e;
+            }}
             initial={{ scaleX: 0 }}
             animate={inputAnimation}
             transition={{ type: 'tween' }}

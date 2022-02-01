@@ -179,7 +179,7 @@ const SLIDER_OFFSET = 6;
 /**
  * 포스터 이미지가 없을 경우 사용할 이미지 주소
  */
-const NETFLIX_LOGO_URL =
+export const NETFLIX_LOGO_URL =
   'https://assets.brand.microsites.netflix.io/assets/2800a67c-4252-11ec-a9ce-066b49664af6_cm_800w.jpg?v=4';
 
 /**
@@ -219,7 +219,7 @@ function Home() {
     data?.results.find((movie) => movie.id === +bigMovieMatch.params.movieId!);
 
   return (
-    <Wrapper>
+    <>
       {isLoading ? (
         <Loader>Loading...</Loader>
       ) : (
@@ -309,7 +309,7 @@ function Home() {
           </AnimatePresence>
         </Wrapper>
       )}
-    </Wrapper>
+    </>
   );
 }
 
